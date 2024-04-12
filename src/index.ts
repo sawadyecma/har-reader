@@ -1,31 +1,6 @@
-console.log("Hello world!");
-
-import fs from "node:fs";
 import { harSchema } from "./schema";
-
-type Result<D> =
-  | {
-      ok: true;
-      data: D;
-    }
-  | {
-      ok: false;
-      error: Error;
-    };
-
-function readFile(): Promise<Result<unknown>> {
-  return new Promise<Result<unknown>>((resolve) => {
-    fs.readFile("./input/file.har", "utf8", (err, data) => {
-      if (err) {
-        console.error(err);
-        resolve({ ok: false, error: err });
-        return;
-      }
-
-      resolve({ ok: true, data: JSON.parse(data) });
-    });
-  });
-}
+import { Entry } from "./types";
+import { readFile } from "./file";
 
 async function main() {
   const read = await readFile();
@@ -33,9 +8,26 @@ async function main() {
     return;
   }
 
-  let parsed = harSchema.parse(read.data);
+  const parsed = harSchema.parse(read.data);
 
   const entries = parsed.log.entries;
+
+  entries.forEach((entry) => {
+    const sdkName = extractSdkName(entry);
+    console.log(sdkName);
+  });
+}
+
+const headerNames = {
+  sdkMethodName: "sdk-method-name",
+} as const;
+
+function extractSdkName(entry: Entry) {
+  const skdHeader = entry.response.headers.find((header) => {
+    return header.name === headerNames.sdkMethodName;
+  });
+
+  return skdHeader?.value;
 }
 
 main();
