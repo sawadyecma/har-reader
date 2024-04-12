@@ -1,6 +1,8 @@
 import { harSchema } from "./schema";
 import { Entry } from "./types";
 import { readFile } from "./file";
+import { makeUrlDynamic } from "./makeUrlDynamic";
+import { makeRanking } from "./reduce/makeRanking";
 
 async function main() {
   const read = await readFile();
@@ -12,22 +14,7 @@ async function main() {
 
   const entries = parsed.log.entries;
 
-  entries.forEach((entry) => {
-    const sdkName = extractSdkName(entry);
-    console.log(sdkName);
-  });
-}
-
-const headerNames = {
-  sdkMethodName: "sdk-method-name",
-} as const;
-
-function extractSdkName(entry: Entry) {
-  const skdHeader = entry.response.headers.find((header) => {
-    return header.name === headerNames.sdkMethodName;
-  });
-
-  return skdHeader?.value;
+  makeRanking(entries);
 }
 
 main();
